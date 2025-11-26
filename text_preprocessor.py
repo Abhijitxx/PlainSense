@@ -98,12 +98,74 @@ class TextPreprocessor:
             'spectrophotometry': 'Spectrophotometry',
             'each above': 'Gachibowli',
             'each abo': 'Gachibowli',
+            
+            # New errors from analysis
+            'newry': 'Neutrophils',
+            'mil/eumm': 'mill/cumm',
+            'mil/cumm': 'mill/cumm',
+            'smil/cumm': 'mill/cumm',
+            '/eumm': '/cumm',
+            'gm%': 'gm/dl',
+            'gmidl': 'gm/dl',
+            'grivdi': 'gm/dl',
+            'mill/emm': 'mill/cumm',
+            'gorpuscular': 'Corpuscular',
+            'gonc': 'Conc',
+            'gone': 'Conc',
+            'ful': '/uL',
+            'jul': '/uL',
+            'jub': '/uL',
+            'lymipheaytas': 'Lymphocytes',
+            'baar': 'Basal',
+            'whala': 'whole',
+            'btood': 'blood',
+            'sone': 'Done',
+            'miridray': 'Mindray',
+            'elecrical': 'Electrical',
+            'tluid': 'fluid',
+            'tlood': 'blood',
             'tally': 'Total',
             'wile': 'White',
             'ceil': 'Cell',
             'ceils': 'Cells',
             'UHID': 'UHID',
             'ref': 'Ref.',
+            'newry': 'Neutrophils',
+            'newt': 'Neutrophils',
+            'POV': 'PCV',
+            'haematocrit': 'Hematocrit',
+            'leucocyte': 'Leukocyte',
+            'kab': 'K/uL',
+            'bias': 'fL',
+            
+            # Additional corrections from 426 reports analysis
+            'leucocytosis': 'leukocytosis',
+            'apollohospitals': 'Apollo Hospitals',
+            'apollohospitale': 'Apollo Hospitals',
+            'avallablo': 'Available',
+            'peripheralsmearexamination': 'PERIPHERAL SMEAR EXAMINATION',
+            'clinicalcorelationis': 'CLINICAL CORRELATION IS',
+            'specificgravity': 'SPECIFIC GRAVITY',
+            'multispeciality': 'MULTISPECIALITY',
+            'multisuperspeacilist': 'MULTI SUPER SPECIALIST',
+            'notiforimedico': 'NOT FOR MEDICO',
+            'notavaildieorimedico': 'NOT AVAILABLE FOR MEDICO',
+            'nomvaindiforimedicoveganrurbose': 'NOT VALID FOR MEDICO',
+            'wibnoiroino': 'LABORATORY',
+            'inikhil': 'NIKHIL',
+            'prekallikreln': 'Prekallikrein',
+            'anisocytosis': 'Anisocytosis',
+            'hepatocellular': 'Hepatocellular',
+            'intracellular': 'Intracellular',
+            'yiu': 'IU',
+            'cellsful': 'cells/uL',
+            'chco': 'HCO3',
+            'pco': 'pCO2',
+            'aptt': 'aPTT',
+            'egfr': 'eGFR',
+            'piperacilin': 'PIPERACILLIN',
+            'nalidixic': 'NALIDIXIC',
+            'ampicillin': 'AMPICILLIN',
         }
         
         # Punctuation normalization
@@ -135,13 +197,34 @@ class TextPreprocessor:
         # Fix medical units
         text = re.sub(r'\b(\d+\.?\d*)\s*god\b', r'\1 g/dl', text, flags=re.IGNORECASE)
         text = re.sub(r'\b(\d+\.?\d*)\s*gd[il]\b', r'\1 g/dl', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(\d+\.?\d*)\s*gm%\b', r'\1 gm/dl', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(\d+\.?\d*)\s*gmidl\b', r'\1 gm/dl', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(\d+\.?\d*)\s*grivdi\b', r'\1 gm/dl', text, flags=re.IGNORECASE)
         text = re.sub(r'\bcells?\s+cu[nm]i?n?\b', 'cells/cumm', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(\d+\.?\d*)\s*[sm]il/e[mc]mm\b', r'\1 mill/cumm', text, flags=re.IGNORECASE)
+        text = re.sub(r'/e[mc]mm\b', '/cumm', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b[fj]u[bl]\b', '/uL', text, flags=re.IGNORECASE)
         
         # Fix "ref doctor are" → "Ref. Doctor: Dr."
         text = re.sub(r'\bref\.?\s+doctor\.?\s+are\s+', 'Ref. Doctor: Dr. ', text, flags=re.IGNORECASE)
         
         # Fix location names
         text = re.sub(r'\beach\s+abo(?:ve)?\b', 'Gachibowli', text, flags=re.IGNORECASE)
+        
+        # Fix medical test names
+        text = re.sub(r'\bnewry\b', 'Neutrophils', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bnewt\b', 'Neutrophils', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bPOV\b', 'PCV', text)
+        text = re.sub(r'\bkab\b', 'K/uL', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bgorpuscular\b', 'Corpuscular', text, flags=re.IGNORECASE)
+        text = re.sub(r'\blymipheaytas\b', 'Lymphocytes', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bwhala\b', 'whole', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b[bt]lood\b', 'blood', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bbias\b', 'fL', text, flags=re.IGNORECASE)
+        
+        # Additional patterns from 426 reports analysis
+        text = re.sub(r'\by[iI][uU]\b', 'IU', text)  # yIU → IU
+        text = re.sub(r'\bclinically\b', 'Clinically', text)  # Capitalize at sentence start
         
         # Fix specific word errors (highest confidence)
         for wrong, correct in self.word_corrections.items():

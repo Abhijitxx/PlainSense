@@ -47,11 +47,9 @@ def batch_process_reports():
         print("ERROR: No PNG files found!")
         return
     
-    # Ask for confirmation
-    response = input(f"\nProcess all {total_files} files? This will take ~{total_files * 10 / 60:.0f} minutes (y/n): ")
-    if response.lower() != 'y':
-        print("Cancelled by user")
-        return
+    # Auto-process (no confirmation needed)
+    print(f"\nStarting batch process of {total_files} files...")
+    print(f"Estimated time: ~{total_files * 10 / 60:.0f} minutes")
     
     # Initialize pipeline WITHOUT ML correction
     print("\nInitializing pipeline...")
