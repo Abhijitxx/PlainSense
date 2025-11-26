@@ -1,38 +1,73 @@
-# PlainSense OCR# PlainSense OCR System# OCR Document Processing System# OCR Document Processing System
+# PlainSense OCR# PlainSense OCR# PlainSense OCR System# OCR Document Processing System# OCR Document Processing System
 
 
 
-OCR pipeline for medical lab reports and documents with intelligent text correction.
+OCR system for medical lab reports and documents with intelligent text correction.
 
 
 
-## FeaturesProfessional OCR pipeline for medical lab reports and general documents with intelligent text correction.
+## FeaturesOCR pipeline for medical lab reports and documents with intelligent text correction.
 
 
+
+- Medical & General modes
+
+- 38+ medical OCR corrections  
+
+- ML text correction (82K words)## FeaturesProfessional OCR pipeline for medical lab reports and general documents with intelligent text correction.
+
+- Streamlit web interface
+
+
+
+## Quick Start
 
 - Medical & General processing modes
 
-- Smart document handling (DOCX, PDF, images)
+```bash
 
-- 38+ medical-specific OCR corrections## Features**Optimized for Printed Documents: Rental Agreements & Lab Reports**A complete pipeline for processing documents with OCR, image preprocessing, and text cleaning.
+pip install -r requirements.txt- Smart document handling (DOCX, PDF, images)
 
-- ML text correction (SymSpell - 82K words)
+streamlit run streamlit_app.py
 
-- Web interface with Streamlit
-
-
-
-## Quick Start- **Dual Processing Modes**: Medical (high accuracy for lab reports) and General (ML-enhanced)
+```- 38+ medical-specific OCR corrections## Features**Optimized for Printed Documents: Rental Agreements & Lab Reports**A complete pipeline for processing documents with OCR, image preprocessing, and text cleaning.
 
 
 
-```bash- **Smart Document Handling**: Direct extraction for digital files, OCR for scanned images
+## Usage- ML text correction (SymSpell - 82K words)
 
-pip install -r requirements.txt
 
-streamlit run streamlit_app.py- **Medical-Specific Corrections**: 38+ corrections for common OCR errors in medical terminology---## Project Structure
+
+```bash- Web interface with Streamlit
+
+# Web interface
+
+streamlit run streamlit_app.py
+
+
+
+# Batch processing## Quick Start- **Dual Processing Modes**: Medical (high accuracy for lab reports) and General (ML-enhanced)
+
+python batch_processor.py
 
 ```
+
+
+
+## Accuracy```bash- **Smart Document Handling**: Direct extraction for digital files, OCR for scanned images
+
+
+
+Medical: 87-92% | General: ML-enhancedpip install -r requirements.txt
+
+
+
+## Requirementsstreamlit run streamlit_app.py- **Medical-Specific Corrections**: 38+ corrections for common OCR errors in medical terminology---## Project Structure
+
+
+
+Python 3.11+, Tesseract OCR, Poppler```
+
 
 - **ML Text Correction**: SymSpell with 82,834 words (enabled for general mode)
 
