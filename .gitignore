@@ -1,0 +1,36 @@
+# Dataset folder - contains large files and sensitive data
+Dataset/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# Output directories
+output/
+preprocessed_images/
+temp_uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env.local
