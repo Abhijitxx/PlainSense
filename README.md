@@ -1,44 +1,85 @@
-# PlainSense OCR System# OCR Document Processing System# OCR Document Processing System
+# PlainSense OCR# PlainSense OCR System# OCR Document Processing System# OCR Document Processing System
 
 
 
-Professional OCR pipeline for medical lab reports and general documents with intelligent text correction.
+OCR pipeline for medical lab reports and documents with intelligent text correction.
 
 
 
-## Features**Optimized for Printed Documents: Rental Agreements & Lab Reports**A complete pipeline for processing documents with OCR, image preprocessing, and text cleaning.
+## FeaturesProfessional OCR pipeline for medical lab reports and general documents with intelligent text correction.
 
 
 
-- **Dual Processing Modes**: Medical (high accuracy for lab reports) and General (ML-enhanced)
+- Medical & General processing modes
 
-- **Smart Document Handling**: Direct extraction for digital files, OCR for scanned images
+- Smart document handling (DOCX, PDF, images)
 
-- **Medical-Specific Corrections**: 38+ corrections for common OCR errors in medical terminology---## Project Structure
+- 38+ medical-specific OCR corrections## Features**Optimized for Printed Documents: Rental Agreements & Lab Reports**A complete pipeline for processing documents with OCR, image preprocessing, and text cleaning.
 
-- **ML Text Correction**: SymSpell with 82,834 words (enabled for general mode)
+- ML text correction (SymSpell - 82K words)
 
-- **Web Interface**: Clean Streamlit UI with mode toggle
+- Web interface with Streamlit
 
-- **Batch Processing**: Process multiple documents efficiently
 
-## 🎯 **What This System Does:**```
 
-## Quick Start
+## Quick Start- **Dual Processing Modes**: Medical (high accuracy for lab reports) and General (ML-enhanced)
 
-plainsense1/
 
-### Installation
 
-```bashProcesses **printed documents** (DOCX, PDF, images) with OCR and ML text correction.├── archive/                          # Source documents (43 rental agreements)
+```bash- **Smart Document Handling**: Direct extraction for digital files, OCR for scanned images
 
 pip install -r requirements.txt
 
-```├── output/                           # All processed outputs
+streamlit run streamlit_app.py- **Medical-Specific Corrections**: 38+ corrections for common OCR errors in medical terminology---## Project Structure
+
+```
+
+- **ML Text Correction**: SymSpell with 82,834 words (enabled for general mode)
+
+## Usage
+
+- **Web Interface**: Clean Streamlit UI with mode toggle
+
+**Web Interface:** `streamlit run streamlit_app.py`  
+
+**Batch Processing:** `python batch_processor.py`- **Batch Processing**: Process multiple documents efficiently
 
 
 
-### Web Interface### **Supported Document Types:**│   ├── text_extracted/              # Direct extraction from .docx (43 files)
+## Components## 🎯 **What This System Does:**```
+
+
+
+- `pipeline.py` - Main orchestrator## Quick Start
+
+- `document_extractor.py` - DOCX/PDF/Image handling
+
+- `image_preprocessor.py` - Image enhancementplainsense1/
+
+- `text_preprocessor.py` - Text cleaning + medical corrections
+
+- `ml_text_corrector.py` - ML correction (SymSpell)### Installation
+
+- `streamlit_app.py` - Web UI
+
+```bashProcesses **printed documents** (DOCX, PDF, images) with OCR and ML text correction.├── archive/                          # Source documents (43 rental agreements)
+
+## Accuracy
+
+pip install -r requirements.txt
+
+- Medical Mode: 87-92% (100% on key data)
+
+- General Mode: ML-enhanced```├── output/                           # All processed outputs
+
+
+
+## Requirements
+
+
+
+Python 3.11+, Tesseract OCR, Poppler### Web Interface### **Supported Document Types:**│   ├── text_extracted/              # Direct extraction from .docx (43 files)
+
 
 ```bash
 
