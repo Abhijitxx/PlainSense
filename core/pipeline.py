@@ -1,6 +1,6 @@
 """
-COMPLETE OCR PIPELINE - Production Ready
-=========================================
+COMPLETE OCR PIPELINE - Production Ready (ML Version)
+======================================================
 
 This is the master pipeline that integrates everything:
 1. Document input (DOCX, PDF, Images)
@@ -9,41 +9,94 @@ This is the master pipeline that integrates everything:
 4. OCR extraction (Tesseract)
 5. ML-based text correction (SymSpell)
 6. Text normalization
-7. Output management
+7. ML Domain classification (Transformer-based)
+8. ML Clause segmentation (Embedding-based)
+9. ML Medical report parsing (NER + Semantic matching)
+10. ML Risk detection (Semantic similarity)
+11. Output management
 
-Author: AI Assistant
-Date: November 26, 2025
+Author: PlainSense Team
+Date: November 2025
 """
 
 import os
+import sys
+import cv2
 from pathlib import Path
 from typing import Dict, List, Optional
 import time
 
-# Import all modules
-from document_extractor import CompleteDocumentExtractor
-from image_preprocessor import ImagePreprocessor
-from text_preprocessor import TextPreprocessor
+# Add parent directory to path for cross-package imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Try to import ML preprocessor
+# Import all modules from reorganized structure
+from ocr.document_extractor import CompleteDocumentExtractor
+from ocr.image_preprocessor import ImagePreprocessor
+from core.text_preprocessor import TextPreprocessor
+
+# Try ML-based modules first (preferred)
 try:
-    from ml_text_corrector import MLTextPreprocessor
-    ML_AVAILABLE = True
+    from ml.ml_domain_classifier import MLDomainClassifier, Domain
+    ML_DOMAIN_CLASSIFIER_AVAILABLE = True
+except ImportError:
+    ML_DOMAIN_CLASSIFIER_AVAILABLE = False
+
+try:
+    from ml.ml_clause_segmenter import MLClauseSegmenter, DocumentType
+    ML_CLAUSE_SEGMENTER_AVAILABLE = True
+except ImportError:
+    ML_CLAUSE_SEGMENTER_AVAILABLE = False
+
+try:
+    from ml.ml_medical_parser import EnhancedMedicalParser as MLMedicalReportParser
+    ML_MEDICAL_PARSER_AVAILABLE = True
+except ImportError:
+    ML_MEDICAL_PARSER_AVAILABLE = False
+
+try:
+    from ml.ml_risk_detector import MLRiskDetector
+    ML_RISK_DETECTOR_AVAILABLE = True
+except ImportError:
+    ML_RISK_DETECTOR_AVAILABLE = False
+
+# Fallback to rule-based modules
+try:
+    from core.domain_classifier import DomainClassifier
+    DOMAIN_CLASSIFIER_AVAILABLE = True
+except ImportError:
+    DOMAIN_CLASSIFIER_AVAILABLE = False
+
+try:
+    from core.clause_segmenter import ClauseSegmenter
+    CLAUSE_SEGMENTER_AVAILABLE = True
+except ImportError:
+    CLAUSE_SEGMENTER_AVAILABLE = False
+
+try:
+    from medical.medical_report_parser import MedicalReportParser
+    MEDICAL_PARSER_AVAILABLE = True
+except ImportError:
+    MEDICAL_PARSER_AVAILABLE = False
+
+# ML Text Corrector
+try:
+    from ml.ml_text_corrector import MLTextPreprocessor
+    ML_TEXT_AVAILABLE = True
 except (ImportError, Exception) as e:
-    ML_AVAILABLE = False
-    print(f"⚠️  ML preprocessing not available: {e}")
-    print("   Install: pip install symspellpy")
+    ML_TEXT_AVAILABLE = False
+    print(f"⚠️  ML text preprocessing not available: {e}")
 
 
 class CompletePipeline:
     """
-    Production-ready OCR pipeline with all features integrated
+    Production-ready OCR pipeline with ML-based processing
     """
     
     def __init__(
         self,
         output_dir: str = "output",
         use_ml_correction: bool = True,
+        use_ml_modules: bool = True,  # New: use ML-based domain/clause/medical
         ml_profile: str = "symspell"  # 'symspell', 'hard-coded', or 'both'
     ):
         """
@@ -52,6 +105,7 @@ class CompletePipeline:
         Args:
             output_dir: Base output directory
             use_ml_correction: Use ML-based text correction
+            use_ml_modules: Use ML-based domain classifier, clause segmenter, etc.
             ml_profile: Which correction method to use
         """
         self.output_dir = Path(output_dir)
@@ -61,9 +115,11 @@ class CompletePipeline:
         self.final_output = self.output_dir / "final_preprocessed"
         self.final_output.mkdir(exist_ok=True)
         
+        self.use_ml_modules = use_ml_modules
+        
         # Initialize components
         print("\n" + "="*70)
-        print("INITIALIZING COMPLETE OCR PIPELINE")
+        print("INITIALIZING COMPLETE OCR PIPELINE (ML Version)")
         print("="*70)
         
         print("\n1️⃣  Loading Document Extractor...")
@@ -78,22 +134,88 @@ class CompletePipeline:
         self.text_preprocessor = TextPreprocessor()
         print("   ✅ Text preprocessor ready (13 hard-coded corrections)")
         
-        # ML Preprocessor
-        self.use_ml = use_ml_correction and ML_AVAILABLE
+        # ML Text Corrector
+        self.use_ml_text = use_ml_correction and ML_TEXT_AVAILABLE
         self.ml_profile = ml_profile
         
-        if self.use_ml:
+        if self.use_ml_text:
             print("\n4️⃣  Loading ML Text Corrector (SymSpell)...")
             try:
                 self.ml_preprocessor = MLTextPreprocessor()
                 print("   ✅ ML preprocessor ready (82,765 words dictionary)")
             except Exception as e:
                 print(f"   ⚠️  ML preprocessor failed: {e}")
-                self.use_ml = False
-                print("   ℹ️  Falling back to hard-coded corrections")
+                self.use_ml_text = False
         else:
             print("\n4️⃣  ML Text Corrector: Disabled")
-            print("   ℹ️  Using hard-coded corrections only")
+        
+        # Domain Classifier (ML or rule-based)
+        print("\n5️⃣  Loading Domain Classifier...")
+        self.domain_classifier = None
+        self.ml_domain_classifier = None
+        
+        if use_ml_modules and ML_DOMAIN_CLASSIFIER_AVAILABLE:
+            try:
+                self.ml_domain_classifier = MLDomainClassifier()
+                print("   ✅ ML Domain classifier ready (Transformer-based)")
+            except Exception as e:
+                print(f"   ⚠️  ML classifier failed: {e}")
+        
+        if self.ml_domain_classifier is None and DOMAIN_CLASSIFIER_AVAILABLE:
+            self.domain_classifier = DomainClassifier()
+            print("   ✅ Rule-based domain classifier ready (fallback)")
+        elif self.ml_domain_classifier is None:
+            print("   ⚠️  Domain classifier not available")
+        
+        # Clause Segmenter (ML or rule-based)
+        print("\n6️⃣  Loading Clause Segmenter...")
+        self.clause_segmenter = None
+        self.ml_clause_segmenter = None
+        
+        if use_ml_modules and ML_CLAUSE_SEGMENTER_AVAILABLE:
+            try:
+                self.ml_clause_segmenter = MLClauseSegmenter()
+                print("   ✅ ML Clause segmenter ready (Embedding-based)")
+            except Exception as e:
+                print(f"   ⚠️  ML segmenter failed: {e}")
+        
+        if self.ml_clause_segmenter is None and CLAUSE_SEGMENTER_AVAILABLE:
+            from clause_segmenter import ClauseSegmenter as RuleClauseSegmenter
+            self.clause_segmenter = RuleClauseSegmenter()
+            print("   ✅ Rule-based clause segmenter ready (fallback)")
+        elif self.ml_clause_segmenter is None:
+            print("   ⚠️  Clause segmenter not available")
+        
+        # Medical Report Parser (ML or rule-based)
+        print("\n7️⃣  Loading Medical Report Parser...")
+        self.medical_parser = None
+        self.ml_medical_parser = None
+        
+        if use_ml_modules and ML_MEDICAL_PARSER_AVAILABLE:
+            try:
+                self.ml_medical_parser = MLMedicalReportParser()
+                print("   ✅ ML Medical parser ready (NER + Semantic matching)")
+            except Exception as e:
+                print(f"   ⚠️  ML medical parser failed: {e}")
+        
+        if self.ml_medical_parser is None and MEDICAL_PARSER_AVAILABLE:
+            self.medical_parser = MedicalReportParser()
+            print("   ✅ Rule-based medical parser ready (fallback)")
+        elif self.ml_medical_parser is None:
+            print("   ⚠️  Medical parser not available")
+        
+        # Risk Detector (ML only)
+        print("\n8️⃣  Loading Risk Detector...")
+        self.ml_risk_detector = None
+        
+        if use_ml_modules and ML_RISK_DETECTOR_AVAILABLE:
+            try:
+                self.ml_risk_detector = MLRiskDetector()
+                print("   ✅ ML Risk detector ready (Semantic similarity)")
+            except Exception as e:
+                print(f"   ⚠️  ML risk detector failed: {e}")
+        else:
+            print("   ⚠️  Risk detector not available")
         
         print("\n" + "="*70)
         print("✅ PIPELINE READY")
@@ -226,7 +348,7 @@ class CompletePipeline:
             # Stage 3: Text Correction & Preprocessing
             print("\n🔧 STAGE 3: Text Correction")
             
-            if self.use_ml and self.ml_profile == 'symspell':
+            if self.use_ml_text and self.ml_profile == 'symspell':
                 # ML-based correction
                 print("   Method: ML-based (SymSpell)")
                 corrected_text = self.ml_preprocessor.preprocess(raw_text)
@@ -236,7 +358,7 @@ class CompletePipeline:
                 # Both corrections
                 print("   Method: Hard-coded + ML")
                 temp_text = self.text_preprocessor.preprocess(raw_text)
-                if self.use_ml:
+                if self.use_ml_text:
                     corrected_text = self.ml_preprocessor.preprocess(temp_text)
                 else:
                     corrected_text = temp_text
@@ -250,12 +372,99 @@ class CompletePipeline:
             
             result['stages']['correction'] = {
                 'success': True,
-                'method': self.ml_profile if self.use_ml else 'hard-coded',
+                'method': self.ml_profile if self.use_ml_text else 'hard-coded',
                 'word_count': len(corrected_text.split())
             }
             
-            # Stage 4: Save Output
-            print("\n💾 STAGE 4: Save Output")
+            # Stage 4: Domain Classification & Analysis (ML-based)
+            print("\n🏷️  STAGE 4: Domain Classification & Analysis")
+            
+            # Classify domain using ML classifier (preferred) or rule-based
+            if self.ml_domain_classifier:
+                classification = self.ml_domain_classifier.classify(corrected_text)
+                domain = classification.domain.value
+                result['domain'] = classification.to_dict()
+                result['classification_method'] = 'ml_transformer'
+                print(f"   Domain: {domain.upper()} (confidence: {classification.confidence:.1%})")
+                print(f"   Method: ML (Transformer-based)")
+            elif self.domain_classifier:
+                classification = self.domain_classifier.classify(corrected_text)
+                domain = classification.domain.value
+                result['domain'] = classification.to_dict()
+                result['classification_method'] = 'rule_based'
+                print(f"   Domain: {domain.upper()} (confidence: {classification.confidence:.1%})")
+                print(f"   Method: Rule-based (fallback)")
+            else:
+                domain = 'unknown'
+                result['domain'] = {'domain': 'unknown', 'confidence': 0}
+                result['classification_method'] = 'none'
+            
+            # Parse medical reports using ML parser (preferred) or rule-based
+            if domain == 'medical':
+                if self.ml_medical_parser:
+                    print("   Parsing medical report (ML)...")
+                    parsed = self.ml_medical_parser.parse(corrected_text)
+                    result['parsed_data'] = parsed
+                    result['abnormal_count'] = parsed.get('abnormal_count', 0)
+                    result['parsing_method'] = 'ml_ner'
+                    print(f"   ✅ Found {parsed['total_tests']} tests, {parsed['abnormal_count']} abnormal")
+                    print(f"   Method: ML (NER + Semantic matching)")
+                elif self.medical_parser:
+                    print("   Parsing medical report (rule-based)...")
+                    parsed = self.medical_parser.parse_and_simplify(corrected_text)
+                    result['parsed_data'] = parsed
+                    result['abnormal_count'] = parsed.get('abnormal_count', 0)
+                    result['parsing_method'] = 'rule_based'
+                    print(f"   ✅ Found {parsed['total_tests']} tests, {parsed['abnormal_count']} abnormal")
+            
+            # Segment clauses using ML segmenter (preferred) or rule-based
+            if self.ml_clause_segmenter:
+                print("   Segmenting document (ML)...")
+                from ml_clause_segmenter import DocumentType as MLDocType
+                doc_type = MLDocType.MEDICAL if domain == 'medical' else MLDocType.LEGAL
+                segmented = self.ml_clause_segmenter.segment(corrected_text, doc_type)
+                result['clauses'] = segmented
+                result['clause_count'] = segmented['total_clauses']
+                result['high_risk_count'] = segmented.get('high_risk_clauses', 0)
+                result['segmentation_method'] = 'ml_embedding'
+                print(f"   ✅ Found {segmented['total_clauses']} clauses, {segmented.get('high_risk_clauses', 0)} high-risk")
+                print(f"   Method: ML (Embedding-based)")
+            elif self.clause_segmenter:
+                print("   Segmenting document (rule-based)...")
+                from clause_segmenter import DocumentType as RuleDocType
+                doc_type = RuleDocType.MEDICAL if domain == 'medical' else RuleDocType.LEGAL
+                segmented = self.clause_segmenter.segment(corrected_text, doc_type)
+                result['clauses'] = segmented
+                result['clause_count'] = segmented['total_clauses']
+                result['high_risk_count'] = segmented['high_risk_clauses']
+                result['segmentation_method'] = 'rule_based'
+                print(f"   ✅ Found {segmented['total_clauses']} clauses, {segmented['high_risk_clauses']} high-risk")
+                print(f"   Method: Rule-based (fallback)")
+            
+            # Run ML Risk Detection if available (for legal documents)
+            if domain == 'legal' and self.ml_risk_detector and 'clauses' in result:
+                print("   Running risk analysis (ML)...")
+                clause_texts = [c['content'] for c in result['clauses'].get('clauses', [])]
+                if clause_texts:
+                    risk_result = self.ml_risk_detector.assess_document(clause_texts, domain='legal')
+                    result['risk_assessment'] = risk_result
+                    result['document_risk_level'] = risk_result['document_risk_level']
+                    print(f"   ✅ Risk level: {risk_result['document_risk_level'].upper()}")
+                    print(f"   Method: ML (Semantic similarity)")
+            
+            result['stages']['analysis'] = {
+                'success': True,
+                'domain': domain,
+                'ml_modules_used': {
+                    'domain_classifier': self.ml_domain_classifier is not None,
+                    'clause_segmenter': self.ml_clause_segmenter is not None,
+                    'medical_parser': self.ml_medical_parser is not None,
+                    'risk_detector': self.ml_risk_detector is not None
+                }
+            }
+            
+            # Stage 5: Save Output
+            print("\n💾 STAGE 5: Save Output")
             output_file = self.final_output / f"{document_name}.txt"
             output_file.write_text(corrected_text, encoding='utf-8')
             print(f"   ✅ Saved: {output_file}")
@@ -312,19 +521,30 @@ class CompletePipeline:
             # PDF → Images → Preprocess → OCR
             print("   ├─ Converting PDF to images...")
             from pdf2image import convert_from_path
-            poppler_path = r"C:\poppler\poppler-24.08.0\Library\bin"
+            import pytesseract
+            from PIL import Image
+            
+            poppler_path = os.environ.get('POPPLER_PATH', r"C:\poppler\poppler-24.08.0\Library\bin")
             images = convert_from_path(str(file_path), dpi=300, poppler_path=poppler_path)
             
             all_text = []
-            for i, image in enumerate(images, 1):
+            doc_name = file_path.stem if hasattr(file_path, 'stem') else Path(file_path).stem
+            for i, pil_image in enumerate(images, 1):
                 print(f"   ├─ Processing page {i}/{len(images)}...")
                 
-                # Preprocess
-                preprocessed = self.image_preprocessor.preprocess(image, profile='standard')
+                # Preprocess (pass PIL image directly - ImagePreprocessor now handles it)
+                preprocessed_cv, _ = self.image_preprocessor.preprocess(
+                    pil_image, 
+                    profile='standard',
+                    image_name=f"{doc_name}_page_{i}"
+                )
+                
+                # Convert preprocessed CV image to PIL for pytesseract
+                rgb = cv2.cvtColor(preprocessed_cv, cv2.COLOR_BGR2RGB)
+                pil_for_ocr = Image.fromarray(rgb)
                 
                 # OCR with better config for structured documents
-                import pytesseract
-                page_text = pytesseract.image_to_string(preprocessed, lang='eng', config='--psm 6')
+                page_text = pytesseract.image_to_string(pil_for_ocr, lang='eng', config='--psm 6')
                 all_text.append(page_text)
             
             text = "\n\n".join(all_text)
@@ -475,7 +695,7 @@ if __name__ == '__main__':
     
     if choice == '1':
         file_path = input("Enter file path: ").strip()
-        result = quick_process(file_path, use_ml=ML_AVAILABLE)
+        result = quick_process(file_path, use_ml=ML_TEXT_AVAILABLE)
         
         if result['success']:
             print(f"\n✅ Successfully processed!")
@@ -490,7 +710,7 @@ if __name__ == '__main__':
         )
     
     elif choice == '3':
-        if not ML_AVAILABLE:
+        if not ML_TEXT_AVAILABLE:
             print("\n⚠️  ML correction not available. Install symspellpy:")
             print("   pip install symspellpy")
             sys.exit(1)
@@ -506,7 +726,7 @@ if __name__ == '__main__':
         print("\n🎬 DEMO MODE")
         print("\nThis will process sample files from output/final_preprocessed/")
         
-        pipeline = CompletePipeline(use_ml_correction=ML_AVAILABLE)
+        pipeline = CompletePipeline(use_ml_correction=ML_TEXT_AVAILABLE, use_ml_modules=True)
         
         # Find test files
         test_dir = Path('output/final_preprocessed')

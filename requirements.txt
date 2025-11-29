@@ -15,6 +15,38 @@ symspellpy==6.7.7
 
 # Web Interface
 streamlit==1.29.0
+flask>=2.3.0
+flask-cors>=4.0.0
 
-# Utilities
-pathlib
+# ============================================
+# ML/DL Dependencies for PlainSense
+# ============================================
+
+# PyTorch (CPU version - use torch with CUDA for GPU)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Transformers and NLP
+transformers>=4.35.0
+sentence-transformers>=2.2.2
+tokenizers>=0.15.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Optional: Biomedical NER (large download ~1GB)
+# Uncomment if needed:
+# datasets>=2.14.0
+
+# ============================================
+# Notes:
+# ============================================
+# For GPU support, install PyTorch with CUDA:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#
+# Models will be downloaded on first run:
+#   - all-MiniLM-L6-v2 (~80MB)
+#   - distilbert-base-uncased (~250MB)
+#   - d4data/biomedical-ner-all (~400MB) [optional]
+# ============================================

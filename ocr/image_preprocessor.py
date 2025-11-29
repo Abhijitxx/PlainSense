@@ -20,6 +20,7 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 import math
+import os
 
 
 class ImagePreprocessor:
@@ -297,24 +298,48 @@ class ImagePreprocessor:
     # FULL PIPELINE
     # =================================================================
     
-    def preprocess(self, image_path, save_steps=False, profile='standard'):
+    def preprocess(self, image_input, save_steps=False, profile='standard', image_name=None):
         """
         Complete preprocessing pipeline
         
         Args:
-            image_path: Path to input image
+            image_input: Path to input image, PIL Image, or numpy array (BGR or RGB)
             save_steps: If True, save intermediate steps
             profile: 'standard', 'aggressive', or 'minimal'
+            image_name: Optional name for output file (required if input is not a path)
             
         Returns:
-            Preprocessed image ready for OCR
+            Tuple of (preprocessed_image, output_path) - image ready for OCR
         """
-        # Load image
-        image = cv2.imread(str(image_path))
-        if image is None:
-            raise ValueError(f"Could not load image: {image_path}")
-        
-        image_name = Path(image_path).stem
+        # Handle different input types
+        if isinstance(image_input, str) or isinstance(image_input, Path):
+            # File path input
+            image = cv2.imread(str(image_input))
+            if image is None:
+                raise ValueError(f"Could not load image: {image_input}")
+            if image_name is None:
+                image_name = Path(image_input).stem
+        elif hasattr(image_input, 'mode'):  # PIL Image
+            # Convert PIL Image to OpenCV format (BGR)
+            # numpy is already imported as np at module level
+            if image_input.mode == 'RGB':
+                image = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
+            elif image_input.mode == 'RGBA':
+                image = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGBA2BGR)
+            elif image_input.mode == 'L':  # Grayscale
+                image = cv2.cvtColor(np.array(image_input), cv2.COLOR_GRAY2BGR)
+            else:
+                image = np.array(image_input.convert('RGB'))
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            if image_name is None:
+                image_name = 'pil_image'
+        elif isinstance(image_input, np.ndarray):
+            # Numpy array (assume BGR for cv2 compatibility, or convert if needed)
+            image = image_input.copy()
+            if image_name is None:
+                image_name = 'numpy_image'
+        else:
+            raise ValueError(f"Unsupported input type: {type(image_input)}. Expected file path, PIL Image, or numpy array.")
         print(f"\n📷 Preprocessing: {image_name}")
         
         original = image.copy()

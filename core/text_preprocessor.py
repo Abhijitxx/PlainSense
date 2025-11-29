@@ -30,24 +30,16 @@ class TextPreprocessor:
         """Initialize with correction dictionaries"""
         
         # Common OCR character errors
+        # NOTE: Removed conflicting 0<->O, 1<->l, 5<->S mappings as they
+        # can flip characters incorrectly. These are handled contextually
+        # in fix_ocr_errors() using regex patterns instead.
         self.ocr_corrections = {
-            # Number-letter confusion
-            '0': 'O',  # Context-dependent
-            'O': '0',  # Context-dependent
-            '1': 'l',  # Context-dependent
-            'l': '1',  # Context-dependent
-            '5': 'S',  # Context-dependent
-            
-            # Common misreads
-            'rn': 'm',
-            'vv': 'w',
-            'ii': 'll',
+            # Common misreads (safe, non-conflicting)
             '|': 'I',
             
             # Special characters
             '~': '-',
             '£': 'E',
-            '>': '-',
         }
         
         # Legal term standardization
@@ -243,9 +235,9 @@ class TextPreprocessor:
         text = re.sub(r'(?<=\d)l(?=\d)', '1', text)  # Between digits → 1
         text = re.sub(r'(?<=[a-z])1(?=[a-z])', 'l', text)  # Between lowercase → l
         
-        # Fix common character sequences
-        text = text.replace('rn', 'm')  # 'rn' often misread as 'm'
-        text = text.replace('vv', 'w')  # 'vv' often misread as 'w'
+        # NOTE: Removed global 'rn'->'m' and 'vv'->'w' replacements as they
+        # break valid words like 'return', 'govern', 'savvy'. These patterns
+        # should only be applied to specific known OCR errors in word_corrections.
         
         # Remove obviously wrong OCR fragments
         # Pattern: <3 chars with mix of special chars and letters

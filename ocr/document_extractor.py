@@ -41,8 +41,11 @@ except ImportError:
 
 try:
     import pytesseract
-    # Configure Tesseract path for Windows
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    # Configure Tesseract path (use environment variable or default Windows path)
+    pytesseract.pytesseract.tesseract_cmd = os.environ.get(
+        'TESSERACT_CMD', 
+        r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    )
     PYTESSERACT_AVAILABLE = True
 except ImportError:
     PYTESSERACT_AVAILABLE = False
@@ -198,8 +201,8 @@ class CompleteDocumentExtractor:
             return []
             
         try:
-            # Poppler path for Windows
-            poppler_path = r"C:\poppler\poppler-24.08.0\Library\bin"
+            # Poppler path (use environment variable or default Windows path)
+            poppler_path = os.environ.get('POPPLER_PATH', r"C:\poppler\poppler-24.08.0\Library\bin")
             
             # Convert PDF to images (300 DPI for good quality)
             images = convert_from_path(str(pdf_path), dpi=300, poppler_path=poppler_path)
